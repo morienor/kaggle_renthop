@@ -1,19 +1,24 @@
 import pandas as pd
 import numpy as numpy
-from sklearn.model_selection import StratifiedKFold
 import pickle
 
-def IO_full():
+
+def IO_full(which="full"):
 	train_p, test_p = "downloads/train.json", "downloads/test.json"
 	train=pd.read_json(train_p)
-	test=pd.read_json(test_p)
 	train["set"]='train'
+	test=pd.read_json(test_p)
 	test["set"]='test'
 	df_full = pd.concat([train, test])
 	df_full = df_full.reset_index(drop=True) # Because stratkfold resets index
 	df_train = df_full[df_full["set"] == "train"]
 	df_test = df_full[df_full["set"] == "test"]
-	return df_full, df_train, df_test
+	if which == "train":
+		return df_train
+	elif which == "test":
+		return df_test
+	else:
+		return df_full
 
 def IO_SkF(	):
 	train_path = "skf/fold_1_train_index"
@@ -25,6 +30,7 @@ def IO_SkF(	):
 	return train_index, valid_index
 
 def make_folds(df_train, df_test):
+	from sklearn.model_selection import StratifiedKFold
 	col_feats = [col for col in df_train if col != "interest_level"]
 	X = df_train[col_feats]
 	target_num_map={"high":0, "medium":1, "low":2}
@@ -35,8 +41,6 @@ def make_folds(df_train, df_test):
 		pickle.dump(train_index, f, pickle.HIGHEST_PROTOCOL)
 	with open("skf/fold_%s_test_index" % count, "wb") as f:
 		pickle.dump(test_index, f, pickle.HIGHEST_PROTOCOL)
-
-
 
 
 def make_simple_features(data):
