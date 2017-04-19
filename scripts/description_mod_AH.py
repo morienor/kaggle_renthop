@@ -56,7 +56,7 @@ class desc_ft_generator(object):
             digits = r'(one|two|three|four|five|six|seven|eight|nine|ten|\d+)'
             pattern = r'%s(?:-| )(?:bed|bdr|br)' % digits #Note: ?: makes it a non-capturing group
             res = re.findall(pattern, r)
-            res = res[0].strip() if len(res)>0 else np.nan
+            res = res[0].strip() if len(res)>0 else 0
             res = digit_map[res] if res in digit_map.keys() else res
             return res
 
@@ -65,16 +65,31 @@ class desc_ft_generator(object):
         self.df["desc_clean"] = self.df["desc_clean"].str.replace("[''*-]", " ") # eg " *dishwasher*doorman" or "-garage -garden -fitness center"
         self.df["desc_clean"] = self.df["desc_clean"].str.lower()
         self.df["desc_clean"] = self.df["desc_clean"].str.replace(r"[\./']", " ") # eg "nice/large flat" or "a flat.it's great"
-        self.df["excite_score"] = self.df["desc_clean"].apply(lambda r: \
+        
+        self.df["excite_score"] = self.df["desc_clean"].apply(lambda r:\
             len(re.findall(r"!", r))/len(r)*100 if len(r)>0 else 0)
-        self.df["num_bedrooms"] = self.df["desc_clean"].apply(num_bedrooms)
+        
+        self.df["is_studio"] = self.df["desc_clean"].apply(lambda r:\
+            re.findall(r"studio", r) if len(r)>0 else 0)
+            
+        self.df["num_bedrooms"] = self.df["desc_clean"].apply(lambda r:\
+         num_bedrooms(r) if len(r)>0 else 0 )
+        
         self.df.loc[self.df["desc_clean"].str.contains("studio"), "num_bedrooms"] = 1.0
+
+        
         self.df["num_bedrooms"] = self.df["num_bedrooms"].astype('float')
+        
         out_path_excite = os.path.join(self.out_dir, "%s_excitement_score.csv" % self.type)
         out_path_bedrooms = os.path.join(self.out_dir, "%s_num_bedrooms.csv" % self.type)
+        out_path_studio = os.path.join(self.out_dir, "%s_is_studio.csv" % self.type)
+        
         if self.save_output:
             self.df["excite_score"].to_csv(out_path_excite, index=False, header=False)
             self.df["num_bedrooms"].to_csv(out_path_bedrooms, index=False, header=False)
+            self.df["is_studio"].to_csv(out_path_studio, index=False, header=False)
+            
+
         print('cleaning and simple feats complete.')
     
     def gen_lsa(self):
@@ -147,7 +162,7 @@ def get_description_features(argv):
     
     gen.IO()
     gen.gen_simple_feats()
-    gen.gen_lsa()
+    #gen.gen_lsa()
 
 
 
