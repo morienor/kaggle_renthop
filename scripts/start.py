@@ -21,13 +21,16 @@ def IO_full(which="full"):
 		return df_full
 
 def IO_SkF(	):
-	train_path = "skf/fold_1_train_index"
-	valid_path = "skf/fold_1_test_index"
-	with open(train_path, "rb") as f:
-		train_index = pickle.load(f)
-	with open(valid_path, "rb") as f:
-		valid_index = pickle.load(f)
-	return train_index, valid_index
+	folds = list()
+	for i in range(1, 6):		
+		train_path = "skf/fold_%s_train_index" % i
+		valid_path = "skf/fold_%s_test_index" % i
+		with open(train_path, "rb") as f:
+			train_index = pickle.load(f)
+		with open(valid_path, "rb") as f:
+			valid_index = pickle.load(f)
+		folds.append((train_index, valid_index))
+	return folds
 
 def make_folds(df_train, df_test):
 	from sklearn.model_selection import StratifiedKFold
